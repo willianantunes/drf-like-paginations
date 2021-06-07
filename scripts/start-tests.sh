@@ -7,6 +7,7 @@ CSPROJ_PATH=./tests
 REPORTS_FOLDER_PATH=tests-reports
 
 dotnet test $CSPROJ_PATH \
+    --logger trx \
     --logger "console;verbosity=detailed" \
     --settings "runsettings.xml" \
     --results-directory $REPORTS_FOLDER_PATH
