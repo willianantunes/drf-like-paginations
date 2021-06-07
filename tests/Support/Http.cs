@@ -17,7 +17,7 @@ namespace Tests.Support
             foreach (string key in queryStringCollection)
             {
                 var value = queryStringCollection[key];
-                queryParamsDictionary.Add(key, new[] {value});
+                queryParamsDictionary.Add(key, new[] { value });
             }
 
             return new QueryCollection(queryParamsDictionary);

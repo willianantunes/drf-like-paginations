@@ -15,7 +15,7 @@ namespace DrfLikePaginations
         private readonly string _limitQueryParam = "limit";
         private readonly string _offsetQueryParam = "offset";
 
-        public Pagination(int defaultPageSize, int maxPageSize=25)
+        public Pagination(int defaultPageSize, int maxPageSize = 25)
         {
             _defaultLimit = defaultPageSize;
             _maxPageSize = maxPageSize;
@@ -42,7 +42,7 @@ namespace DrfLikePaginations
         {
             if (numberOfRowsToSkip == 0)
                 return null;
-            
+
             var uriBuilder = new UriBuilder(url);
             var query = HttpUtility.ParseQueryString(uriBuilder.Query);
             query[_limitQueryParam] = numberOfRowsToTake.ToString();
@@ -104,7 +104,8 @@ namespace DrfLikePaginations
                 int requestedLimitValue;
                 var couldBeParsed = int.TryParse(value, out requestedLimitValue);
 
-                if (couldBeParsed && requestedLimitValue > 0) {
+                if (couldBeParsed && requestedLimitValue > 0)
+                {
                     var valueToBeReturned = requestedLimitValue > _maxPageSize ? _maxPageSize : requestedLimitValue;
                     return valueToBeReturned;
                 }
