@@ -1,5 +1,8 @@
 # DRF Like Paginations
 
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=willianantunes_drf-like-paginations&metric=coverage)](https://sonarcloud.io/dashboard?id=willianantunes_drf-like-paginations)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=willianantunes_drf-like-paginations&metric=ncloc)](https://sonarcloud.io/dashboard?id=willianantunes_drf-like-paginations)
+
 This project is an attempt to mimic [LimitOffsetPagination](https://www.django-rest-framework.org/api-guide/pagination/#limitoffsetpagination) that is available on DRF. Many other types of paginations can be incorporated beyond the ones available [here](https://www.django-rest-framework.org/api-guide/pagination/#api-reference). This is just a start.
 
 ## Compose services
