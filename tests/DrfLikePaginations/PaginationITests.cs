@@ -34,7 +34,7 @@ namespace Tests.DrfLikePaginations
             public async Task ShouldCreatePaginatedScenarioOptions1()
             {
                 // Arrange
-                var query = await CreateScenarioWith50Persons(_dbContext);
+                var query = await CreateScenarioWith50People(_dbContext);
                 var queryParams = Http.RetrieveQueryCollectionFromQueryString(String.Empty);
                 // Act
                 var paginated = await _pagination.CreateAsync(query, _url, queryParams);
@@ -42,14 +42,15 @@ namespace Tests.DrfLikePaginations
                 paginated.Count.Should().Be(50);
                 paginated.Results.Should().HaveCount(_defaultPageLimit);
                 paginated.Previous.Should().BeNull();
-                paginated.Next.Should().Be($"{_url}/?offset=10&limit=10");
+                var expectedNext = $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit}";
+                paginated.Next.Should().Be(expectedNext);
             }
 
             [Fact(DisplayName = "When either limit or offset receive values different than int")]
             public async Task ShouldCreatePaginatedScenarioOptions2()
             {
                 // Arrange
-                var query = await CreateScenarioWith50Persons(_dbContext);
+                var query = await CreateScenarioWith50People(_dbContext);
                 var queryString = "offset=jafar&limit=aladdin";
                 var queryParams = Http.RetrieveQueryCollectionFromQueryString(queryString);
                 // Act
@@ -58,14 +59,15 @@ namespace Tests.DrfLikePaginations
                 paginated.Count.Should().Be(50);
                 paginated.Results.Should().HaveCount(_defaultPageLimit);
                 paginated.Previous.Should().BeNull();
-                paginated.Next.Should().Be($"{_url}/?offset=10&limit=10");
+                var expectedNext = $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit}";
+                paginated.Next.Should().Be(expectedNext);
             }
 
             [Fact(DisplayName = "When only offset is configured")]
             public async Task ShouldCreatePaginatedScenarioOptions3()
             {
                 // Arrange
-                var query = await CreateScenarioWith50Persons(_dbContext);
+                var query = await CreateScenarioWith50People(_dbContext);
                 var offsetValue = 23;
                 var queryString = $"offset={offsetValue}";
                 var queryParams = Http.RetrieveQueryCollectionFromQueryString(queryString);
@@ -74,15 +76,17 @@ namespace Tests.DrfLikePaginations
                 // Assert
                 paginated.Count.Should().Be(50);
                 paginated.Results.Should().HaveCount(_defaultPageLimit);
-                paginated.Previous.Should().Be($"{_url}/?limit=10&offset={offsetValue - _defaultPageLimit}");
-                paginated.Next.Should().Be($"{_url}/?offset={offsetValue + _defaultPageLimit}&limit=10");
+                var expectedPrevious = $"{_url}/?limit={_defaultPageLimit}&offset={offsetValue - _defaultPageLimit}";
+                paginated.Previous.Should().Be(expectedPrevious);
+                var expectedNext = $"{_url}/?limit=10&offset={offsetValue + _defaultPageLimit}";
+                paginated.Next.Should().Be(expectedNext);
             }
 
             [Fact(DisplayName = "When provided limit is higher than what is allowed")]
             public async Task ShouldCreatePaginatedScenarioOptions4()
             {
                 // Arrange
-                var query = await CreateScenarioWith50Persons(_dbContext);
+                var query = await CreateScenarioWith50People(_dbContext);
                 var queryString = "limit=1000";
                 var queryParams = Http.RetrieveQueryCollectionFromQueryString(queryString);
                 // Act
@@ -91,7 +95,8 @@ namespace Tests.DrfLikePaginations
                 paginated.Count.Should().Be(50);
                 paginated.Results.Should().HaveCount(_defaultMaxPageLimit);
                 paginated.Previous.Should().BeNull();
-                paginated.Next.Should().Be($"{_url}/?offset={_defaultMaxPageLimit}&limit={_defaultMaxPageLimit}");
+                var expectedNext = $"{_url}/?limit={_defaultMaxPageLimit}&offset={_defaultMaxPageLimit}";
+                paginated.Next.Should().Be(expectedNext);
             }
         }
 
@@ -117,7 +122,7 @@ namespace Tests.DrfLikePaginations
             public async Task ShouldCreatePaginatedScenarioNavigation1()
             {
                 // First arrangement
-                var query = await CreateScenarioWith50Persons(_dbContext);
+                var query = await CreateScenarioWith50People(_dbContext);
                 var queryParams = Http.RetrieveQueryCollectionFromQueryString(String.Empty);
                 var shouldGetNextPagination = true;
                 var listOfPrevious = new List<string>();
@@ -143,17 +148,17 @@ namespace Tests.DrfLikePaginations
                 var expectedListOfPrevious = new List<string>
                 {
                     null,
-                    $"{_url}/?limit=10",
-                    $"{_url}/?limit=10&offset=10",
-                    $"{_url}/?limit=10&offset=20",
-                    $"{_url}/?limit=10&offset=30",
+                    $"{_url}/?limit={_defaultPageLimit}",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit}",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit + (_defaultPageLimit * 1)}",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit + (_defaultPageLimit * 2)}",
                 };
                 var expectedListOfNext = new List<string>
                 {
-                    $"{_url}/?offset=10&limit=10",
-                    $"{_url}/?offset=20&limit=10",
-                    $"{_url}/?offset=30&limit=10",
-                    $"{_url}/?offset=40&limit=10",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit}",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit + (_defaultPageLimit * 1)}",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit + (_defaultPageLimit * 2)}",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit + (_defaultPageLimit * 3)}",
                     null
                 };
                 listOfPrevious.Should().Equal(expectedListOfPrevious);
@@ -164,7 +169,7 @@ namespace Tests.DrfLikePaginations
             public async Task ShouldCreatePaginatedScenarioNavigation2()
             {
                 // First arrangement
-                var query = await CreateScenarioWith50Persons(_dbContext);
+                var query = await CreateScenarioWith50People(_dbContext);
                 var queryString = "offset=40&limit=10";
                 var queryParams = Http.RetrieveQueryCollectionFromQueryString(queryString);
                 var shouldGetPreviousPagination = true;
@@ -190,26 +195,26 @@ namespace Tests.DrfLikePaginations
                 // Assert
                 var expectedListOfPrevious = new List<string>
                 {
-                    $"{_url}/?limit=10&offset=30",
-                    $"{_url}/?limit=10&offset=20",
-                    $"{_url}/?limit=10&offset=10",
-                    $"{_url}/?limit=10",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit + (_defaultPageLimit * 2)}",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit + (_defaultPageLimit * 1)}",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit}",
+                    $"{_url}/?limit={_defaultPageLimit}",
                     null,
                 };
                 var expectedListOfNext = new List<string>
                 {
                     null,
-                    $"{_url}/?offset=40&limit=10",
-                    $"{_url}/?offset=30&limit=10",
-                    $"{_url}/?offset=20&limit=10",
-                    $"{_url}/?offset=10&limit=10",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit + (_defaultPageLimit * 3)}",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit + (_defaultPageLimit * 2)}",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit + (_defaultPageLimit * 1)}",
+                    $"{_url}/?limit={_defaultPageLimit}&offset={_defaultPageLimit}",
                 };
                 listOfPrevious.Should().Equal(expectedListOfPrevious);
                 listOfNext.Should().Equal(expectedListOfNext);
             }
         }
 
-        private static async Task<IQueryable<Person>> CreateScenarioWith50Persons(InMemoryDbContextBuilder.TestDbContext<Person> dbContext)
+        private static async Task<IQueryable<Person>> CreateScenarioWith50People(InMemoryDbContextBuilder.TestDbContext<Person> dbContext)
         {
             var persons = new List<Person>();
 

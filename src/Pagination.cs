@@ -71,8 +71,8 @@ namespace DrfLikePaginations
 
             var uriBuilder = new UriBuilder(url);
             var query = HttpUtility.ParseQueryString(uriBuilder.Query);
-            query[_offsetQueryParam] = newOffSetValue.ToString();
             query[_limitQueryParam] = numberOfRowsToTake.ToString();
+            query[_offsetQueryParam] = newOffSetValue.ToString();
             uriBuilder.Query = query.ToString();
 
             return uriBuilder.Uri.AbsoluteUri;
