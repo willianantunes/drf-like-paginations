@@ -5,6 +5,57 @@
 
 This project is an attempt to mimic [LimitOffsetPagination](https://www.django-rest-framework.org/api-guide/pagination/#limitoffsetpagination) that is available on DRF. Many other types of paginations can be incorporated beyond the ones available [here](https://www.django-rest-framework.org/api-guide/pagination/#api-reference). This is just a start.
 
+    dotnet add package DrfLikePaginations
+
+## Sample output
+
+You can check out one sample output below from the project [ef-core-how-to-handle-migrations-in-production](https://github.com/willianantunes/tutorials/tree/d19609a50605a8d519ade3a568995da66568b212/2021/XX/ef-core-how-to-handle-migrations-in-production):
+
+```json
+{
+  "count": 100,
+  "next": "http://0.0.0.0:8000/api/v1/todoitems?limit=5&offset=5",
+  "previous": null,
+  "results": [
+    {
+      "name": "TD 1",
+      "isComplete": false,
+      "id": 1,
+      "createdAt": "2021-06-08T19:00:17.873423",
+      "updatedAt": "2021-06-08T19:00:17.87347"
+    },
+    {
+      "name": "TD 73",
+      "isComplete": false,
+      "id": 2,
+      "createdAt": "2021-06-08T19:00:17.873571",
+      "updatedAt": "2021-06-08T19:00:17.873571"
+    },
+    {
+      "name": "TD 72",
+      "isComplete": true,
+      "id": 3,
+      "createdAt": "2021-06-08T19:00:17.87357",
+      "updatedAt": "2021-06-08T19:00:17.87357"
+    },
+    {
+      "name": "TD 71",
+      "isComplete": false,
+      "id": 4,
+      "createdAt": "2021-06-08T19:00:17.87357",
+      "updatedAt": "2021-06-08T19:00:17.87357"
+    },
+    {
+      "name": "TD 70",
+      "isComplete": true,
+      "id": 5,
+      "createdAt": "2021-06-08T19:00:17.873569",
+      "updatedAt": "2021-06-08T19:00:17.873569"
+    }
+  ]
+}
+```
+
 ## How to use it
 
 You can add the following in your `appsettings.json`:
