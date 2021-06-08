@@ -36,3 +36,6 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}        
         run: |
           ./scripts/start-sonarcloud.sh ${{ secrets.SONAR_TOKEN }} ${{ github.sha }}
+      - name: Publish to NuGet
+        run: |
+          ./scripts/start-nuget.sh ${{ secrets.NUGET_API_KEY }}

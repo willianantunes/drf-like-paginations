@@ -37,4 +37,13 @@ services:
           "./scripts/start-sonarcloud.sh",
           "YOUR-SONAR-CLOUD-TOKEN",
           "YOUR-PROJECT-VERSION",
-      ]    
+      ]
+  publish-package:
+    build: *dockerfile-dev-build
+    volumes:
+      - .:/app
+    command:
+      [
+          "./scripts/start-nuget.sh",
+          "YOUR-API-KEY",
+      ]
