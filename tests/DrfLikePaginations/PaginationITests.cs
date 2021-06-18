@@ -4,12 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using DrfLikePaginations;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Tests.Support;
 using Xunit;
 
 namespace Tests.DrfLikePaginations
 {
-    public record Person(int Id, string Name);
+    public record Person(int Id, string Name, string Greetings, bool Robot);
 
     public class PaginationITests
     {
@@ -214,20 +215,161 @@ namespace Tests.DrfLikePaginations
             }
         }
 
+        public class Queries
+        {
+            private readonly int _defaultPageLimit;
+            private readonly Pagination _pagination;
+            private readonly InMemoryDbContextBuilder.TestDbContext<Person> _dbContext;
+            private readonly string _url;
+
+            public Queries()
+            {
+                _dbContext = InMemoryDbContextBuilder.CreateDbContext<Person>();
+                _defaultPageLimit = 30;
+                _pagination = new Pagination(_defaultPageLimit);
+                _url = "https://www.willianantunes.com";
+            }
+
+            [Fact(DisplayName = "When one parameter is provided and the type is 'string'")]
+            public async Task ShouldQueryThroughNameScenario1()
+            {
+                // Arrange
+                var query = await CreateScenarioWith50People(_dbContext);
+
+                var greetingsFilter = "Bonjour";
+                var filterQueryString = $"greetings={greetingsFilter}";
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(filterQueryString);
+                var expectedResult = 5;
+                _dbContext.Entities.Count(p => p.Greetings == greetingsFilter).Should().Be(expectedResult);
+                // Act
+                var paginated = await _pagination.CreateAsync(query, _url, queryParams);
+                // Assert
+                paginated.Count.Should().Be(50);
+                paginated.Results.Should().HaveCount(expectedResult);
+            }
+
+            [Fact(DisplayName = "When one parameter is provided and the type is 'int'")]
+            public async Task ShouldQueryThroughNameScenario2()
+            {
+                // Arrange
+                var query = await CreateScenarioWith50People(_dbContext);
+                var idToFilter = 1;
+                var filterQueryString = $"id={idToFilter}";
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(filterQueryString);
+                // Act
+                var paginated = await _pagination.CreateAsync(query, _url, queryParams);
+                // Assert
+                paginated.Count.Should().Be(50);
+                paginated.Results.Should().HaveCount(1);
+                var person = paginated.Results.First();
+                person.Id.Should().Be(idToFilter);
+            }
+
+            [Fact(DisplayName = "When one parameter is provided and the type is 'bool'")]
+            public async Task ShouldQueryThroughNameScenario3()
+            {
+                // Arrange
+                var query = await CreateScenarioWith50People(_dbContext);
+                var robotPersonFilter = true;
+                var filterQueryString = $"robot={robotPersonFilter}";
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(filterQueryString);
+                var expectedResult = 25;
+                _dbContext.Entities.Count(p => p.Robot == robotPersonFilter).Should().Be(expectedResult);
+                // Act
+                var paginated = await _pagination.CreateAsync(query, _url, queryParams);
+                // Assert
+                paginated.Count.Should().Be(50);
+                paginated.Results.Should().HaveCount(expectedResult);
+            }
+
+            [Fact(DisplayName = "When two parameters are provided")]
+            public async Task ShouldQueryThroughNameScenario4()
+            {
+                // Arrange
+                var query = await CreateScenarioWith50People(_dbContext);
+                var robotPersonFilter = true;
+                var greetingsFilter = "Hola";
+                var filterQueryString = $"robot={robotPersonFilter}&greetings={greetingsFilter}";
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(filterQueryString);
+                var expectedResult = 5;
+                _dbContext.Entities.Count(p => p.Robot == robotPersonFilter && p.Greetings == greetingsFilter).Should().Be(expectedResult);
+                // Act
+                var paginated = await _pagination.CreateAsync(query, _url, queryParams);
+                // Assert
+                paginated.Count.Should().Be(50);
+                paginated.Results.Should().HaveCount(expectedResult);
+            }
+
+            [Fact(DisplayName = "When three parameters are provided")]
+            public async Task ShouldQueryThroughNameScenario5()
+            {
+                // Arrange
+                var query = await CreateScenarioWith50People(_dbContext);
+                var idToFilter = 2;
+                var robotPersonFilter = true;
+                var greetingsFilter = "Hola";
+                var filterQueryString = $"robot={robotPersonFilter}&greetings={greetingsFilter}&id={idToFilter}";
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(filterQueryString);
+                var expectedResult = 1;
+                _dbContext.Entities.Count(p => p.Robot == robotPersonFilter && p.Greetings == greetingsFilter && p.Id == idToFilter).Should().Be(expectedResult);
+                // Act
+                var paginated = await _pagination.CreateAsync(query, _url, queryParams);
+                // Assert
+                paginated.Count.Should().Be(50);
+                paginated.Results.Should().HaveCount(expectedResult);
+            }
+
+            [Fact(DisplayName = "Should do nothing when one parameter is provided but with the wrong type")]
+            public async Task ShouldQueryThroughNameScenario6()
+            {
+                // Arrange
+                var query = await CreateScenarioWith50People(_dbContext);
+                var wrongIdToFilter = "jafar";
+                var filterQueryString = $"id={wrongIdToFilter}";
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(filterQueryString);
+                // Act
+                var paginated = await _pagination.CreateAsync(query, _url, queryParams);
+                // Assert
+                paginated.Count.Should().Be(50);
+                paginated.Results.Should().HaveCount(_defaultPageLimit);
+            }
+        }
+
         private static async Task<IQueryable<Person>> CreateScenarioWith50People(InMemoryDbContextBuilder.TestDbContext<Person> dbContext)
         {
+            var helloWords = new[]
+            {
+                "Bonjour",
+                "Hola",
+                "Salve",
+                "Guten Tag",
+                "Olá",
+                "Anyoung haseyo",
+                "Goedendag",
+                "Yassas",
+                "Shalom",
+                "God dag",
+            };
+            var indexForHelloWords = 0;
             var persons = new List<Person>();
 
             foreach (int index in Enumerable.Range(1, 50))
             {
-                var person = new Person(index, $"Person {index}");
+                var greetingsMessage = helloWords[indexForHelloWords++];
+                var IsRobot = index % 2 == 0;
+
+                var person = new Person(index, $"Person {index}", greetingsMessage, IsRobot);
                 persons.Add(person);
+
+                var shouldRestartIndexForHelloWords = index % 10 == 0;
+                if (shouldRestartIndexForHelloWords) indexForHelloWords = 0;
             }
 
             await dbContext.AddRangeAsync(persons);
             await dbContext.SaveChangesAsync();
 
-            return dbContext.Entities.AsQueryable();
+            // https://docs.microsoft.com/en-us/ef/core/querying/tracking#no-tracking-queries
+            return dbContext.Entities.AsNoTracking().AsQueryable();
         }
     }
 }

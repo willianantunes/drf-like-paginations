@@ -7,6 +7,8 @@ This project is an attempt to mimic [LimitOffsetPagination](https://www.django-r
 
     dotnet add package DrfLikePaginations
 
+It supports **queries in your data** given what is informed through the URL as query strings. You can get some details about how it works if you look at the tests in [PaginationITests.Queries](./tests/DrfLikePaginations/PaginationITests.cs) class.
+
 ## Sample output
 
 You can check out one sample output below from the project [ef-core-how-to-handle-migrations-in-production](https://github.com/willianantunes/tutorials/tree/d19609a50605a8d519ade3a568995da66568b212/2021/XX/ef-core-how-to-handle-migrations-in-production):
@@ -96,7 +98,7 @@ namespace EFCoreHandlingMigrations.Controllers.V1
         [HttpGet]
         public async Task<Paginated<TodoItem>> GetTodoItems()
         {
-            var query = _databaseSet.AsQueryable();
+            var query = _databaseSet.AsNoTracking().AsQueryable();
             var displayUrl = Request.GetDisplayUrl();
             var queryParams = Request.Query;
 

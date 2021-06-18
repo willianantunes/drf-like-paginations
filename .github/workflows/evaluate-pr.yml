@@ -1,0 +1,27 @@
+name: Build and publish
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.sln'
+
+jobs:
+  build-n-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install dotnet-format and dotnet-sonarscanner
+        run: |
+          dotnet tool install --global dotnet-format
+          dotnet tool install --global dotnet-sonarscanner
+      - name: Check if the project is well formatted
+        run: |
+          ./scripts/start-lint.sh
+      - name: Build the project and run all tests     
+        run: |
+          ./scripts/start-tests.sh
