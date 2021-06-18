@@ -7,7 +7,7 @@ This project is an attempt to mimic [LimitOffsetPagination](https://www.django-r
 
     dotnet add package DrfLikePaginations
 
-It supports **queries in your data** given what is informed through the URL as query strings. You can get some details about how it works if you look at the tests in [PaginationITests.Queries](./tests/DrfLikePaginations/PaginationITests.cs) class.
+It supports **queries in your data** given what is informed through the URL as query strings. You can get some details about how it works if you look at the tests in [PaginationITests.Queries](https://github.com/willianantunes/drf-like-paginations/blob/abdce3ab9293af95d923cf0b25634f555fad4aaa/tests/DrfLikePaginations/PaginationITests.cs#L218) class.
 
 ## Sample output
 
@@ -110,7 +110,7 @@ namespace EFCoreHandlingMigrations.Controllers.V1
 
 ## Compose services
 
-If you look at [docker-compose.yaml](./docker-compose.yaml), you'll find three main services:
+If you look at [docker-compose.yaml](https://github.com/willianantunes/drf-like-paginations/blob/abdce3ab9293af95d923cf0b25634f555fad4aaa/docker-compose.yaml#L7-L30), you'll find three main services:
 
 - [tests](https://github.com/willianantunes/drf-like-paginations/blob/fff46e8627c1bfd23fcc2ef7fe9e8663e6e87156/docker-compose.yaml#L7): run all the tests, and generate tests-reports folder with coverage data.
 - [lint](https://github.com/willianantunes/drf-like-paginations/blob/fff46e8627c1bfd23fcc2ef7fe9e8663e6e87156/docker-compose.yaml#L15): check if the project is valid given standard dotnet-format rules
