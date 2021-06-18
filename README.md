@@ -9,6 +9,8 @@ This project is an attempt to mimic [LimitOffsetPagination](https://www.django-r
 
 It supports **queries in your data** given what is informed through the URL as query strings. You can get some details about how it works if you look at the tests in [PaginationITests.Queries](https://github.com/willianantunes/drf-like-paginations/blob/abdce3ab9293af95d923cf0b25634f555fad4aaa/tests/DrfLikePaginations/PaginationITests.cs#L218) class.
 
+It also support **model transformation**. If you don't want to expose your model, you can create a DTO and then provide a function which transforms your data. Check out one example on [this integration test](https://github.com/willianantunes/drf-like-paginations/blob/67c5a14babcbfbd75ded8d603a9575a1bb15511a/tests/DrfLikePaginations/PaginationITests.cs#L354-L372).
+
 ## Sample output
 
 You can check out one sample output below from the project [ef-core-how-to-handle-migrations-in-production](https://github.com/willianantunes/tutorials/tree/d19609a50605a8d519ade3a568995da66568b212/2021/XX/ef-core-how-to-handle-migrations-in-production):
