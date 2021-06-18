@@ -11,6 +11,10 @@ It supports **queries in your data** given what is informed through the URL as q
 
 It also support **model transformation**. If you don't want to expose your model, you can create a DTO and then provide a function which transforms your data. Check out one example on [this integration test](https://github.com/willianantunes/drf-like-paginations/blob/67c5a14babcbfbd75ded8d603a9575a1bb15511a/tests/DrfLikePaginations/PaginationITests.cs#L354-L372).
 
+The following project is using it and you can use as an example to set up yours:
+
+- [Tic Tac Toe C# Playground](https://github.com/willianantunes/tic-tac-toe-csharp-playground)
+
 ## Sample output
 
 You can check out one sample output below from the project [ef-core-how-to-handle-migrations-in-production](https://github.com/willianantunes/tutorials/tree/d19609a50605a8d519ade3a568995da66568b212/2021/XX/ef-core-how-to-handle-migrations-in-production):
