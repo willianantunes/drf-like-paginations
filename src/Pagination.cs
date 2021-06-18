@@ -44,6 +44,16 @@ namespace DrfLikePaginations
             return new Paginated<T>(count, nextLink, previousLink, items);
         }
 
+        public async Task<Paginated<D>> CreateAsync<T, D>(IQueryable<T> source, string url,
+            IQueryCollection queryParams, Func<T, D> transform)
+        {
+            var paginated = await CreateAsync(source, url, queryParams);
+            var paginatedResults = paginated.Results;
+            var refreshedResults = paginatedResults.Select(transform);
+
+            return new Paginated<D>(paginated.Count, paginated.Next, paginated.Previous, refreshedResults);
+        }
+
         private string? RetrievePreviousLink(string url, int numberOfRowsToSkip, int numberOfRowsToTake)
         {
             if (numberOfRowsToSkip == 0)
@@ -120,7 +130,8 @@ namespace DrfLikePaginations
             return _defaultLimit;
         }
 
-        private IQueryable<T> FilterIfApplicable<T>(IQueryable<T> source, IEnumerable<KeyValuePair<string, StringValues>> queryParams)
+        private IQueryable<T> FilterIfApplicable<T>(IQueryable<T> source,
+            IEnumerable<KeyValuePair<string, StringValues>> queryParams)
         {
             var propertiesToBeUsed = new Dictionary<PropertyInfo, string>();
             var typeOfTheGivenGeneric = typeof(T);
@@ -176,10 +187,11 @@ namespace DrfLikePaginations
                     {
                         if (index is not 0)
                         {
-                            InvocationExpression invocationExpression = Expression.Invoke(predicate, mergedPredicate.Parameters);
-                            mergedPredicate = Expression.Lambda<Func<T, bool>>(Expression.AndAlso(mergedPredicate.Body, invocationExpression), predicate.Parameters);
+                            InvocationExpression invocationExpression =
+                                Expression.Invoke(predicate, mergedPredicate.Parameters);
+                            mergedPredicate = Expression.Lambda<Func<T, bool>>(
+                                Expression.AndAlso(mergedPredicate.Body, invocationExpression), predicate.Parameters);
                         }
-
                     }
 
                     return source.Where(mergedPredicate);
