@@ -11,13 +11,14 @@ using Xunit;
 namespace Tests.DrfLikePaginations
 {
     public record Person(int Id, string Name, string Greetings, bool Robot);
+    public record PersonDTO(int Identification, string HonestName, string Salute, bool IAmRobot);
 
     public class PaginationITests
     {
         public class Options
         {
             private readonly int _defaultPageLimit;
-            private readonly Pagination _pagination;
+            private readonly IPagination _pagination;
             private readonly InMemoryDbContextBuilder.TestDbContext<Person> _dbContext;
             private readonly string _url;
             private readonly int _defaultMaxPageLimit;
@@ -104,7 +105,7 @@ namespace Tests.DrfLikePaginations
         public class Navigations
         {
             private readonly int _defaultPageLimit;
-            private readonly Pagination _pagination;
+            private readonly IPagination _pagination;
             private readonly InMemoryDbContextBuilder.TestDbContext<Person> _dbContext;
             private readonly string _url;
             private readonly int _defaultMaxPageLimit;
@@ -218,7 +219,7 @@ namespace Tests.DrfLikePaginations
         public class Queries
         {
             private readonly int _defaultPageLimit;
-            private readonly Pagination _pagination;
+            private readonly IPagination _pagination;
             private readonly InMemoryDbContextBuilder.TestDbContext<Person> _dbContext;
             private readonly string _url;
 
@@ -332,6 +333,42 @@ namespace Tests.DrfLikePaginations
                 // Assert
                 paginated.Count.Should().Be(50);
                 paginated.Results.Should().HaveCount(_defaultPageLimit);
+            }
+        }
+
+        public class RefreshingModel
+        {
+            private readonly int _defaultPageLimit;
+            private readonly IPagination _pagination;
+            private readonly InMemoryDbContextBuilder.TestDbContext<Person> _dbContext;
+            private readonly string _url;
+
+            public RefreshingModel()
+            {
+                _dbContext = InMemoryDbContextBuilder.CreateDbContext<Person>();
+                _defaultPageLimit = 30;
+                _pagination = new Pagination(_defaultPageLimit);
+                _url = "https://www.willianantunes.com";
+            }
+
+            [Fact(DisplayName = "Should transform models into their dto version when function provided")]
+            public async Task ShouldRefreshModel()
+            {
+                // Arrange
+                var query = await CreateScenarioWith50People(_dbContext);
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(string.Empty);
+                Func<Person, PersonDTO> transform = p => new PersonDTO(p.Id, p.Name, p.Greetings, p.Robot);
+                // Act
+                var paginated = await _pagination.CreateAsync(query, _url, queryParams, transform);
+                // Assert
+                paginated.Count.Should().Be(50);
+                foreach (var personDto in paginated.Results)
+                {
+                    var person = _dbContext.Entities.Find(personDto.Identification);
+                    personDto.Salute.Should().Be(person.Greetings);
+                    personDto.HonestName.Should().Be(person.Name);
+                    personDto.IAmRobot.Should().Be(person.Robot);
+                }
             }
         }
 
