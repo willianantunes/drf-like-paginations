@@ -7,7 +7,7 @@
     <PackageId>DrfLikePaginations</PackageId>
     <Version>0.1.0</Version>
     <Authors>Willian Antunes</Authors>
-    <Description>Tired of creating pagination all the time in your .NET project? Use this DRF like pagination and focus on business logic 🙂</Description>
+    <Description>Tired of creating pagination all the time in your .NET projects? Use this DRF like pagination and focus on business logic 🙂</Description>
     <PackageLicenseUrl>https://github.com/willianantunes/drf-like-paginations/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/willianantunes/drf-like-paginations</RepositoryUrl>
     <PackageTags>pagination;navigation;django</PackageTags>
