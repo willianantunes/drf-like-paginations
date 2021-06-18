@@ -163,7 +163,7 @@ namespace DrfLikePaginations
                     }
                     catch (FormatException)
                     {
-                        // It happens let's say when you try to convert ABC to int, than raising FormatException 😉
+                        // It happens let's say when you try to convert ABC to int, thus raising FormatException 😉
                     }
                 }
 
