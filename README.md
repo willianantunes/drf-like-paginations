@@ -104,7 +104,7 @@ namespace EFCoreHandlingMigrations.Controllers.V1
         [HttpGet]
         public async Task<Paginated<TodoItem>> GetTodoItems()
         {
-            var query = _databaseSet.AsNoTracking().AsQueryable();
+            var query = _databaseSet.AsNoTracking().OrderBy(t => t.CreatedAt);
             var displayUrl = Request.GetDisplayUrl();
             var queryParams = Request.Query;
 
