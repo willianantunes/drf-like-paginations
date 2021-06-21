@@ -406,7 +406,7 @@ namespace Tests.DrfLikePaginations
             await dbContext.SaveChangesAsync();
 
             // https://docs.microsoft.com/en-us/ef/core/querying/tracking#no-tracking-queries
-            return dbContext.Entities.AsNoTracking().AsQueryable();
+            return dbContext.Entities.AsNoTracking().OrderBy(p => p.Id);
         }
     }
 }
