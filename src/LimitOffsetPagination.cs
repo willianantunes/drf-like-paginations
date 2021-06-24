@@ -11,20 +11,20 @@ using Microsoft.Extensions.Primitives;
 
 namespace DrfLikePaginations
 {
-    public class Pagination : IPagination
+    public class LimitOffsetPagination : PaginationBase
     {
         private readonly int _defaultLimit;
         private readonly int _maxPageSize;
         private readonly string _limitQueryParam = "limit";
         private readonly string _offsetQueryParam = "offset";
 
-        public Pagination(int defaultPageSize, int maxPageSize = 25)
+        public LimitOffsetPagination(int defaultPageSize, int maxPageSize = 25) : base(defaultPageSize, maxPageSize)
         {
             _defaultLimit = defaultPageSize;
             _maxPageSize = maxPageSize;
         }
 
-        public async Task<Paginated<T>> CreateAsync<T>(IQueryable<T> source, string url, IQueryCollection queryParams)
+        public override async Task<Paginated<T>> CreateAsync<T>(IQueryable<T> source, string url, IQueryCollection queryParams)
         {
             // Extracting query strings
             var limitQueryParam = queryParams.FirstOrDefault(pair => pair.Key == _limitQueryParam);
@@ -44,14 +44,14 @@ namespace DrfLikePaginations
             return new Paginated<T>(count, nextLink, previousLink, items);
         }
 
-        public async Task<Paginated<D>> CreateAsync<T, D>(IQueryable<T> source, string url,
-            IQueryCollection queryParams, Func<T, D> transform)
+        public override async Task<Paginated<TResult>> CreateAsync<T, TResult>(IQueryable<T> source, string url,
+            IQueryCollection queryParams, Func<T, TResult> transform)
         {
             var paginated = await CreateAsync(source, url, queryParams);
             var paginatedResults = paginated.Results;
             var refreshedResults = paginatedResults.Select(transform);
 
-            return new Paginated<D>(paginated.Count, paginated.Next, paginated.Previous, refreshedResults);
+            return new Paginated<TResult>(paginated.Count, paginated.Next, paginated.Previous, refreshedResults);
         }
 
         private string? RetrievePreviousLink(string url, int numberOfRowsToSkip, int numberOfRowsToTake)
@@ -109,25 +109,6 @@ namespace DrfLikePaginations
             }
 
             return defaultOffSetValue;
-        }
-
-        private int RetrieveConfiguredLimit(StringValues values)
-        {
-            var value = values.FirstOrDefault();
-
-            if (value is not null)
-            {
-                int requestedLimitValue;
-                var couldBeParsed = int.TryParse(value, out requestedLimitValue);
-
-                if (couldBeParsed && requestedLimitValue > 0)
-                {
-                    var valueToBeReturned = requestedLimitValue > _maxPageSize ? _maxPageSize : requestedLimitValue;
-                    return valueToBeReturned;
-                }
-            }
-
-            return _defaultLimit;
         }
 
         private IQueryable<T> FilterIfApplicable<T>(IQueryable<T> source,

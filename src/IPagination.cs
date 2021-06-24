@@ -8,8 +8,6 @@ namespace DrfLikePaginations
     public interface IPagination
     {
         public Task<Paginated<T>> CreateAsync<T>(IQueryable<T> source, string url, IQueryCollection queryParams);
-
-        public Task<Paginated<D>> CreateAsync<T, D>(IQueryable<T> source, string url, IQueryCollection queryParams,
-            Func<T, D> transform);
+        public Task<Paginated<TResult>> CreateAsync<T, TResult>(IQueryable<T> source, string url, IQueryCollection queryParams, Func<T, TResult> transform);
     }
 }

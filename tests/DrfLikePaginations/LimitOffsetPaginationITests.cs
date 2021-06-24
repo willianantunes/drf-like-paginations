@@ -10,10 +10,10 @@ using Xunit;
 
 namespace Tests.DrfLikePaginations
 {
-    public record Person(int Id, string Name, string Greetings, bool Robot);
-    public record PersonDTO(int Identification, string HonestName, string Salute, bool IAmRobot);
+    record Person(int Id, string Name, string Greetings, bool Robot);
+    record PersonDto(int Identification, string HonestName, string Salute, bool AmRobot);
 
-    public class PaginationITests
+    public class LimitOffsetPaginationITests
     {
         public class Options
         {
@@ -28,7 +28,7 @@ namespace Tests.DrfLikePaginations
                 _dbContext = InMemoryDbContextBuilder.CreateDbContext<Person>();
                 _defaultPageLimit = 10;
                 _defaultMaxPageLimit = 25;
-                _pagination = new Pagination(_defaultPageLimit, _defaultMaxPageLimit);
+                _pagination = new LimitOffsetPagination(_defaultPageLimit, _defaultMaxPageLimit);
                 _url = "https://www.willianantunes.com";
             }
 
@@ -115,7 +115,7 @@ namespace Tests.DrfLikePaginations
                 _dbContext = InMemoryDbContextBuilder.CreateDbContext<Person>();
                 _defaultPageLimit = 10;
                 _defaultMaxPageLimit = 25;
-                _pagination = new Pagination(_defaultPageLimit, _defaultMaxPageLimit);
+                _pagination = new LimitOffsetPagination(_defaultPageLimit, _defaultMaxPageLimit);
                 _url = "https://www.willianantunes.com";
             }
 
@@ -227,7 +227,7 @@ namespace Tests.DrfLikePaginations
             {
                 _dbContext = InMemoryDbContextBuilder.CreateDbContext<Person>();
                 _defaultPageLimit = 30;
-                _pagination = new Pagination(_defaultPageLimit);
+                _pagination = new LimitOffsetPagination(_defaultPageLimit);
                 _url = "https://www.willianantunes.com";
             }
 
@@ -347,7 +347,7 @@ namespace Tests.DrfLikePaginations
             {
                 _dbContext = InMemoryDbContextBuilder.CreateDbContext<Person>();
                 _defaultPageLimit = 30;
-                _pagination = new Pagination(_defaultPageLimit);
+                _pagination = new LimitOffsetPagination(_defaultPageLimit);
                 _url = "https://www.willianantunes.com";
             }
 
@@ -357,7 +357,7 @@ namespace Tests.DrfLikePaginations
                 // Arrange
                 var query = await CreateScenarioWith50People(_dbContext);
                 var queryParams = Http.RetrieveQueryCollectionFromQueryString(string.Empty);
-                Func<Person, PersonDTO> transform = p => new PersonDTO(p.Id, p.Name, p.Greetings, p.Robot);
+                Func<Person, PersonDto> transform = p => new PersonDto(p.Id, p.Name, p.Greetings, p.Robot);
                 // Act
                 var paginated = await _pagination.CreateAsync(query, _url, queryParams, transform);
                 // Assert
@@ -367,7 +367,7 @@ namespace Tests.DrfLikePaginations
                     var person = _dbContext.Entities.Find(personDto.Identification);
                     personDto.Salute.Should().Be(person.Greetings);
                     personDto.HonestName.Should().Be(person.Name);
-                    personDto.IAmRobot.Should().Be(person.Robot);
+                    personDto.AmRobot.Should().Be(person.Robot);
                 }
             }
         }
