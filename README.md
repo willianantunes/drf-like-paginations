@@ -3,7 +3,7 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=willianantunes_drf-like-paginations&metric=coverage)](https://sonarcloud.io/dashboard?id=willianantunes_drf-like-paginations)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=willianantunes_drf-like-paginations&metric=ncloc)](https://sonarcloud.io/dashboard?id=willianantunes_drf-like-paginations)
 
-This project is an attempt to mimic [LimitOffsetPagination](https://www.django-rest-framework.org/api-guide/pagination/#limitoffsetpagination) that is available on DRF. Many other types of paginations can be incorporated beyond the ones available [here](https://www.django-rest-framework.org/api-guide/pagination/#api-reference). This is just a start.
+This project is an attempt to mimic [LimitOffsetPagination](https://www.django-rest-framework.org/api-guide/pagination/#limitoffsetpagination) and [CursorPagination](https://www.django-rest-framework.org/api-guide/pagination/#cursorpagination) that are available on DRF. Many other types of paginations can be incorporated beyond the ones available [here](https://www.django-rest-framework.org/api-guide/pagination/#api-reference). This is just a start.
 
     dotnet add package DrfLikePaginations
 
@@ -76,11 +76,19 @@ You can add the following in your `appsettings.json`:
 }
 ```
 
-Then configure the pagination service like the following:
+Then configure the pagination service like the following for `LimitOffsetPagination`:
 
 ```csharp
 var paginationSize = int.Parse(Configuration["Pagination:Size"]);
-services.AddSingleton<IPagination>(new Pagination(paginationSize));
+services.AddSingleton<IPagination>(new LimitOffsetPagination(paginationSize));
+```
+
+You can use `CursorPagination` also:
+
+```csharp
+var paginationSize = int.Parse(Configuration["Pagination:Size"]);
+// It will consider the field "id" to order by default, but you can change it 😄
+services.AddSingleton<IPagination>(new CursorPagination(paginationSize));
 ```
 
 Now you are able to use it 😍! One full example:
@@ -104,6 +112,7 @@ namespace EFCoreHandlingMigrations.Controllers.V1
         [HttpGet]
         public async Task<Paginated<TodoItem>> GetTodoItems()
         {
+            // You just need to apply OrderBy when using LimitOffsetPagination 
             var query = _databaseSet.AsNoTracking().OrderBy(t => t.CreatedAt);
             var displayUrl = Request.GetDisplayUrl();
             var queryParams = Request.Query;
