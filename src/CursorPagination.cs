@@ -145,7 +145,7 @@ namespace DrfLikePaginations
             string? followingPosition = null;
             if (hasFollowingPosition is true)
             {
-                var item = cursor.Reverse? items.First()! : items.Last()!;
+                var item = cursor.Reverse ? items.First()! : items.Last()!;
                 followingPosition = Reflections.RetrieveValueAsString(item, genericType, _defaultFieldForOrdering);
             }
             // The previous and next links are changed depending on the reverse order
@@ -180,7 +180,7 @@ namespace DrfLikePaginations
             {
                 var previousPosition = retrieveValidPosition(followingPosition, false);
                 var nextPosition = retrieveValidPosition(cursor.CurrentPosition, true);
-                return new Positions(previousPosition,  nextPosition);
+                return new Positions(previousPosition, nextPosition);
             }
         }
 

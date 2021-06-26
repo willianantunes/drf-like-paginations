@@ -47,7 +47,7 @@ namespace DrfLikePaginations
 
             return value.ToString()!;
         }
-        
+
         public static string RetrieveValueAsString(object source, Type type, string propertyName)
         {
             var property = RetrievePropertyInfoFromSourceGivenItsName(type, propertyName);
@@ -60,6 +60,6 @@ namespace DrfLikePaginations
             }
 
             return value.ToString()!;
-        }        
+        }
     }
 }

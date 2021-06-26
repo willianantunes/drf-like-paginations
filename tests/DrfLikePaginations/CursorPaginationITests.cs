@@ -151,7 +151,7 @@ namespace Tests.DrfLikePaginations
                     paginated.Count.Should().BeNull();
                     paginated.Results.Should().HaveCount(_defaultPageLimit);
                     var allRetrievedIds = paginated.Results.Select(v => v.Id).ToList();
-                    listOfResults.Add(allRetrievedIds);                    
+                    listOfResults.Add(allRetrievedIds);
                     listOfPrevious.Add(BuildPaginationSetup(paginated.Previous));
                     listOfNext.Add(BuildPaginationSetup(paginated.Next));
                     if (paginated.Previous is null)
@@ -190,7 +190,7 @@ namespace Tests.DrfLikePaginations
                 listOfPrevious.Should().Equal(expectedListOfPrevious);
                 listOfNext.Should().Equal(expectedListOfNext);
                 foreach (var (result, index) in listOfResults.Select((item, index) => (item, index)))
-                    result.Should().Equal(expectedListOfResults[index]);                
+                    result.Should().Equal(expectedListOfResults[index]);
             }
         }
 

@@ -20,7 +20,7 @@ namespace DrfLikePaginations
 
         public abstract Task<Paginated<T>> CreateAsync<T>(IQueryable<T> source, string url, IQueryCollection queryParams);
         public abstract Task<Paginated<TResult>> CreateAsync<T, TResult>(IQueryable<T> source, string url, IQueryCollection queryParams, Func<T, TResult> transform);
-        
+
         protected int RetrieveConfiguredLimit(StringValues values)
         {
             var value = values.FirstOrDefault();
