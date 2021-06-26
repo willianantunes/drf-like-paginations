@@ -22,6 +22,7 @@ namespace DrfLikePaginations
         public CursorPagination(int defaultPageSize, int maxPageSize = 25, string defaultFieldForOrdering = "Id") :
             base(defaultPageSize, maxPageSize)
         {
+            // TODO: Add support for DESC ordering
             _defaultFieldForOrdering = defaultFieldForOrdering;
         }
 
