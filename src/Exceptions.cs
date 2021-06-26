@@ -12,11 +12,22 @@ namespace DrfLikePaginations
 
     public class PropertyMustBePresentException : DrfLikePaginationsExceptions
     {
-        public PropertyMustBePresentException(string message) : base(message) { }
+        public PropertyMustBePresentException(string message) : base(message)
+        {
+        }
     }
-    
+
     public class PropertyValueMustBePresentException : DrfLikePaginationsExceptions
     {
-        public PropertyValueMustBePresentException(string message) : base(message) { }
+        public PropertyValueMustBePresentException(string message) : base(message)
+        {
+        }
+    }
+
+    public class OffsetFeatureNotImplementedException : DrfLikePaginationsExceptions
+    {
+        public OffsetFeatureNotImplementedException(string message) : base(message)
+        {
+        }
     }
 }

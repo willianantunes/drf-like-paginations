@@ -193,7 +193,6 @@ namespace Tests.DrfLikePaginations
                         queryParams = Http.RetrieveQueryCollectionFromQueryString(queryStrings);
                     }
                 }
-
                 // Assert
                 var expectedListOfPrevious = new List<string>
                 {

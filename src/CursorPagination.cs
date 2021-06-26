@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Primitives;
 namespace DrfLikePaginations
 {
     record CursorDetails(bool Reverse, string? CurrentPosition);
+    record Positions(string? Previous, string? Next);
 
     public class CursorPagination : PaginationBase
     {
@@ -34,30 +36,24 @@ namespace DrfLikePaginations
             var numberOfRowsToTake = RetrieveConfiguredLimit(limitQueryParam.Value);
             // Building list
             // TODO: Add OFFSET to fix possible collisions
-            var orderedSource = ApplyOrdering(source);
+            var orderedSource = ApplyOrdering(source, cursor);
             var filteredSource = ApplyFilterIfRequired(orderedSource, cursor);
             var extraItemToIdentifyNextPage = 1;
             var actualNumberOfRowsToTake = numberOfRowsToTake + extraItemToIdentifyNextPage;
             var items = await filteredSource.Take(actualNumberOfRowsToTake).ToListAsync();
-            var itemToBeReturned = items.Take(numberOfRowsToTake);
+            var itemsToBeReturned = items.Take(numberOfRowsToTake).ToList();
             // What is needed to build the links
-            var indexElementFromNextPage = actualNumberOfRowsToTake - 1;
-            var indexElementBeforeTheOneFromNextPage = actualNumberOfRowsToTake - 2;
-            var hasElementNextPage = items.ElementAtOrDefault(indexElementFromNextPage) is not null;
-            string? positionToBeUsedNextLink = null;
-            if (hasElementNextPage)
+            if (cursor.Reverse)
             {
-                var lastElement = items.ElementAt(indexElementBeforeTheOneFromNextPage)!;
-                positionToBeUsedNextLink =
-                    Reflections.RetrieveValueAsString(lastElement, typeof(T), _defaultFieldForOrdering);
+                items.Reverse();
+                itemsToBeReturned.Reverse();
             }
-
-            var currentPosition = cursor.CurrentPosition;
+            var positions = RetrievePositions(cursor, actualNumberOfRowsToTake, items, itemsToBeReturned);
             // Building links
-            string? nextLink = RetrieveNextLink(url, numberOfRowsToTake, positionToBeUsedNextLink);
-            string? previousLink = RetrievePreviousLink(url, numberOfRowsToTake, currentPosition);
+            string? previousLink = RetrievePreviousLink(url, numberOfRowsToTake, positions.Previous);
+            string? nextLink = RetrieveNextLink(url, numberOfRowsToTake, positions.Next);
 
-            return new Paginated<T>(null, nextLink, previousLink, itemToBeReturned);
+            return new Paginated<T>(null, nextLink, previousLink, itemsToBeReturned);
         }
 
         public override Task<Paginated<TResult>> CreateAsync<T, TResult>(IQueryable<T> source, string url,
@@ -98,7 +94,7 @@ namespace DrfLikePaginations
         {
             if (cursorPosition is null)
                 return null;
-            
+
             // Notice that the reverse here is set as FALSE
             var newCursor = new CursorDetails(false, cursorPosition);
 
@@ -141,7 +137,54 @@ namespace DrfLikePaginations
             return new CursorDetails(false, null);
         }
 
-        private IQueryable<T> ApplyOrdering<T>(IQueryable<T> data)
+        private Positions RetrievePositions<T>(CursorDetails cursor, int actualNumberOfRowsToTake, List<T> items, List<T> itemsToBeReturned)
+        {
+            var genericType = typeof(T);
+            // Is there any position that should be followed?
+            var hasFollowingPosition = items.Count > itemsToBeReturned.Count;
+            string? followingPosition = null;
+            if (hasFollowingPosition is true)
+            {
+                var item = cursor.Reverse? items.First()! : items.Last()!;
+                followingPosition = Reflections.RetrieveValueAsString(item, genericType, _defaultFieldForOrdering);
+            }
+            // The previous and next links are changed depending on the reverse order
+            Func<string?, bool, string?> retrieveValidPosition = (positionToBeEvaluated, invertItems) =>
+            {
+                if (positionToBeEvaluated is null)
+                    return null;
+                var enumerableOfItems = itemsToBeReturned.AsEnumerable();
+                if (invertItems)
+                    enumerableOfItems = enumerableOfItems.Reverse();
+
+                foreach (var item in enumerableOfItems)
+                {
+                    var position = Reflections.RetrieveValueAsString(item, genericType, _defaultFieldForOrdering);
+
+                    if (position != positionToBeEvaluated)
+                        return position;
+
+                    var message = $"The position {position} should have been different than {cursor.CurrentPosition}";
+                    throw new OffsetFeatureNotImplementedException(message);
+                }
+
+                return null;
+            };
+            if (cursor.Reverse is false)
+            {
+                var previousPosition = retrieveValidPosition(cursor.CurrentPosition, false);
+                var nextPosition = retrieveValidPosition(followingPosition, true);
+                return new Positions(previousPosition, nextPosition);
+            }
+            else
+            {
+                var previousPosition = retrieveValidPosition(followingPosition, false);
+                var nextPosition = retrieveValidPosition(cursor.CurrentPosition, true);
+                return new Positions(previousPosition,  nextPosition);
+            }
+        }
+
+        private IQueryable<T> ApplyOrdering<T>(IQueryable<T> data, CursorDetails cursor)
         {
             var typeOfTheGivenGeneric = typeof(T);
             var property =
@@ -151,6 +194,9 @@ namespace DrfLikePaginations
             var memberAccess = Expression.Property(param, property.Name);
             var convertedMemberAccess = Expression.Convert(memberAccess, typeof(object));
             var orderPredicate = Expression.Lambda<Func<T, object>>(convertedMemberAccess, param);
+
+            if (cursor.Reverse)
+                return data.AsQueryable().OrderByDescending(orderPredicate);
 
             return data.AsQueryable().OrderBy(orderPredicate);
         }
