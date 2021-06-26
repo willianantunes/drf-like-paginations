@@ -31,12 +31,13 @@ namespace DrfLikePaginations
             // Extracting query strings
             var cursorQueryParam = queryParams.FirstOrDefault(pair => pair.Key == _cursorQueryParam);
             var limitQueryParam = queryParams.FirstOrDefault(pair => pair.Key == _limitQueryParam);
+            var allOthersParams = queryParams.Where(pair => pair.Key != _limitQueryParam);
             // Basic data
             var cursor = RetrieveConfiguredCursor(cursorQueryParam.Value);
             var numberOfRowsToTake = RetrieveConfiguredLimit(limitQueryParam.Value);
             // Building list
-            // TODO: Add OFFSET to fix possible collisions
-            var orderedSource = ApplyOrdering(source, cursor);
+            var customSource = ApplyCustomFilterIfApplicable(source, allOthersParams);
+            var orderedSource = ApplyOrdering(customSource, cursor);
             var filteredSource = ApplyFilterIfRequired(orderedSource, cursor);
             var extraItemToIdentifyNextPage = 1;
             var actualNumberOfRowsToTake = numberOfRowsToTake + extraItemToIdentifyNextPage;
@@ -48,6 +49,7 @@ namespace DrfLikePaginations
                 items.Reverse();
                 itemsToBeReturned.Reverse();
             }
+            // TODO: Add OFFSET to fix possible collisions
             var positions = RetrievePositions(cursor, actualNumberOfRowsToTake, items, itemsToBeReturned);
             // Building links
             string? previousLink = RetrievePreviousLink(url, numberOfRowsToTake, positions.Previous);
@@ -56,10 +58,14 @@ namespace DrfLikePaginations
             return new Paginated<T>(null, nextLink, previousLink, itemsToBeReturned);
         }
 
-        public override Task<Paginated<TResult>> CreateAsync<T, TResult>(IQueryable<T> source, string url,
+        public override async Task<Paginated<TResult>> CreateAsync<T, TResult>(IQueryable<T> source, string url,
             IQueryCollection queryParams, Func<T, TResult> transform)
         {
-            throw new NotImplementedException();
+            var paginated = await CreateAsync(source, url, queryParams);
+            var paginatedResults = paginated.Results;
+            var refreshedResults = paginatedResults.Select(transform);
+
+            return new Paginated<TResult>(paginated.Count, paginated.Next, paginated.Previous, refreshedResults);
         }
 
         private string? RetrievePreviousLink(string url, int numberOfRowsToTake, string? cursorPosition)

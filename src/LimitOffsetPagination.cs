@@ -38,7 +38,7 @@ namespace DrfLikePaginations
             var nextLink = RetrieveNextLink(url, numberOfRowsToSkip, numberOfRowsToTake, count);
             var previousLink = RetrievePreviousLink(url, numberOfRowsToSkip, numberOfRowsToTake);
             // Building list
-            IQueryable<T> filteredSource = FilterIfApplicable(source, allOthersParams);
+            IQueryable<T> filteredSource = ApplyCustomFilterIfApplicable(source, allOthersParams);
             var items = await filteredSource.Skip(numberOfRowsToSkip).Take(numberOfRowsToTake).ToListAsync();
 
             return new Paginated<T>(count, nextLink, previousLink, items);
@@ -109,77 +109,6 @@ namespace DrfLikePaginations
             }
 
             return defaultOffSetValue;
-        }
-
-        private IQueryable<T> FilterIfApplicable<T>(IQueryable<T> source,
-            IEnumerable<KeyValuePair<string, StringValues>> queryParams)
-        {
-            var propertiesToBeUsed = new Dictionary<PropertyInfo, string>();
-            var typeOfTheGivenGeneric = typeof(T);
-            var flags = BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance;
-
-            // Get all valid properties that were provided
-            foreach (var queryParam in queryParams)
-            {
-                var propertyName = queryParam.Key;
-                var propertyValue = queryParam.Value.ToString();
-                var property = typeOfTheGivenGeneric.GetProperty(propertyName, flags);
-                if (property is not null && propertyValue is not null)
-                    propertiesToBeUsed.Add(property, queryParam.Value.ToString());
-            }
-
-            var shouldApplyFiltering = propertiesToBeUsed.Count > 0;
-
-            if (shouldApplyFiltering)
-            {
-                var parameterExpression = Expression.Parameter(typeOfTheGivenGeneric);
-                var allPredicates = new List<Expression<Func<T, bool>>>();
-
-                // Create all predicates
-                foreach (var keyValuePair in propertiesToBeUsed)
-                {
-                    // Extract details
-                    var propertyInfo = keyValuePair.Key;
-                    var propertyType = propertyInfo.PropertyType;
-                    var value = keyValuePair.Value;
-                    // Create the expression
-                    var propertyOrFieldTarget = Expression.PropertyOrField(parameterExpression, propertyInfo.Name);
-                    try
-                    {
-                        var castedValue = Convert.ChangeType(value, propertyType);
-                        var valueToBeEqual = Expression.Constant(castedValue, propertyType);
-                        var finalExpression = Expression.Equal(propertyOrFieldTarget, valueToBeEqual);
-                        var predicate = Expression.Lambda<Func<T, bool>>(finalExpression, parameterExpression);
-                        // Add to list of predicates
-                        allPredicates.Add(predicate);
-                    }
-                    catch (FormatException)
-                    {
-                        // It happens let's say when you try to convert ABC to int, thus raising FormatException 😉
-                    }
-                }
-
-                var hasPredicates = allPredicates.Count > 0;
-                if (hasPredicates)
-                {
-                    // Merge all predicates created
-                    Expression<Func<T, bool>> mergedPredicate = allPredicates.First();
-                    foreach (var (predicate, index) in allPredicates.Select((item, index) => (item, index)))
-                    {
-                        if (index is not 0)
-                        {
-                            InvocationExpression invocationExpression =
-                                Expression.Invoke(predicate, mergedPredicate.Parameters);
-                            mergedPredicate = Expression.Lambda<Func<T, bool>>(
-                                Expression.AndAlso(mergedPredicate.Body, invocationExpression), predicate.Parameters);
-                        }
-                    }
-
-                    return source.Where(mergedPredicate);
-                }
-            }
-
-            return source;
         }
     }
 }
