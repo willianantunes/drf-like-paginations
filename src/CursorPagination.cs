@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using Microsoft.AspNetCore.Http;
@@ -12,18 +13,31 @@ using Microsoft.Extensions.Primitives;
 namespace DrfLikePaginations
 {
     record CursorDetails(bool Reverse, string? CurrentPosition);
+
     record Positions(string? Previous, string? Next);
 
     public class CursorPagination : PaginationBase
     {
         private readonly string _defaultFieldForOrdering;
         private readonly string _cursorQueryParam = "cursor";
+        private readonly bool _useDescOrdering;
 
         public CursorPagination(int defaultPageSize, int maxPageSize = 25, string defaultFieldForOrdering = "Id") :
             base(defaultPageSize, maxPageSize)
         {
-            // TODO: Add support for DESC ordering
-            _defaultFieldForOrdering = defaultFieldForOrdering;
+            var pattern = @"^-?([a-zA-Z]+)$";
+            var match = Regex.Match(defaultFieldForOrdering, pattern);
+
+            if (match.Success)
+            {
+                _useDescOrdering = defaultFieldForOrdering.StartsWith("-");
+                _defaultFieldForOrdering = match.Groups[1].Value;
+            }
+            else
+            {
+                var message = $"The field {defaultFieldForOrdering} does not match the pattern: {pattern}";
+                throw new ProvidedFieldForOrderingIsWrongException(message);
+            }
         }
 
         public override async Task<Paginated<T>> CreateAsync<T>(IQueryable<T> source, string url,
@@ -47,6 +61,7 @@ namespace DrfLikePaginations
             // What is needed to build the links
             if (cursor.Reverse)
             {
+                // So the user can see it as expected
                 items.Reverse();
                 itemsToBeReturned.Reverse();
             }
@@ -144,7 +159,8 @@ namespace DrfLikePaginations
             return new CursorDetails(false, null);
         }
 
-        private Positions RetrievePositions<T>(CursorDetails cursor, int actualNumberOfRowsToTake, List<T> items, List<T> itemsToBeReturned)
+        private Positions RetrievePositions<T>(CursorDetails cursor, int actualNumberOfRowsToTake, List<T> items,
+            List<T> itemsToBeReturned)
         {
             var genericType = typeof(T);
             // Is there any position that should be followed?
@@ -155,6 +171,7 @@ namespace DrfLikePaginations
                 var item = cursor.Reverse ? items.First()! : items.Last()!;
                 followingPosition = Reflections.RetrieveValueAsString(item, genericType, _defaultFieldForOrdering);
             }
+
             // The previous and next links are changed depending on the reverse order
             Func<string?, bool, string?> retrieveValidPosition = (positionToBeEvaluated, invertItems) =>
             {
@@ -191,7 +208,7 @@ namespace DrfLikePaginations
             }
         }
 
-        private IQueryable<T> ApplyOrdering<T>(IQueryable<T> data, CursorDetails cursor)
+        private IQueryable<T> ApplyOrdering<T>(IQueryable<T> source, CursorDetails cursor)
         {
             var typeOfTheGivenGeneric = typeof(T);
             var property =
@@ -202,13 +219,21 @@ namespace DrfLikePaginations
             var convertedMemberAccess = Expression.Convert(memberAccess, typeof(object));
             var orderPredicate = Expression.Lambda<Func<T, object>>(convertedMemberAccess, param);
 
-            if (cursor.Reverse)
-                return data.AsQueryable().OrderByDescending(orderPredicate);
+            if (_useDescOrdering)
+            {
+                if (cursor.Reverse)
+                    return source.AsQueryable().OrderBy(orderPredicate);
 
-            return data.AsQueryable().OrderBy(orderPredicate);
+                return source.AsQueryable().OrderByDescending(orderPredicate);
+            }
+
+            if (cursor.Reverse)
+                return source.AsQueryable().OrderByDescending(orderPredicate);
+
+            return source.AsQueryable().OrderBy(orderPredicate);
         }
 
-        private IQueryable<T> ApplyFilterIfRequired<T>(IQueryable<T> data, CursorDetails cursor)
+        private IQueryable<T> ApplyFilterIfRequired<T>(IQueryable<T> source, CursorDetails cursor)
         {
             var currentPosition = cursor.CurrentPosition;
             var reverse = cursor.Reverse;
@@ -228,16 +253,19 @@ namespace DrfLikePaginations
                 // Now we create the right, which is the value to be compared with
                 var castedValue = Convert.ChangeType(currentPosition!, propertyType);
                 var currentPositionExpression = Expression.Constant(castedValue, propertyType);
-                BinaryExpression lessThanOrGreaterThanExpression = reverse is true
-                    ? Expression.LessThan(convertedMemberAccess, currentPositionExpression)
-                    : Expression.GreaterThan(convertedMemberAccess, currentPositionExpression);
+                // Which expression should apply given CURSOR vs REVERSED FIELD
+                BinaryExpression lessThanOrGreaterThanExpression;
+                if (reverse != _useDescOrdering)
+                    lessThanOrGreaterThanExpression = Expression.LessThan(convertedMemberAccess, currentPositionExpression);
+                else
+                    lessThanOrGreaterThanExpression = Expression.GreaterThan(convertedMemberAccess, currentPositionExpression);
                 // Final expression
                 var filterExpression = Expression.Lambda<Func<T, bool>>(lessThanOrGreaterThanExpression, param);
 
-                return data.Where(filterExpression);
+                return source.Where(filterExpression);
             }
 
-            return data;
+            return source;
         }
     }
 }
