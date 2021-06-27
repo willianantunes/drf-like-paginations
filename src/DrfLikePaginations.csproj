@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>DrfLikePaginations</RootNamespace>
     <PackageId>DrfLikePaginations</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Authors>Willian Antunes</Authors>
     <Description>Tired of creating pagination all the time in your .NET projects? Apply either Offset or Cursor pagination and focus on business logic 🙂</Description>
     <PackageLicenseUrl>https://github.com/willianantunes/drf-like-paginations/blob/master/LICENSE</PackageLicenseUrl>
