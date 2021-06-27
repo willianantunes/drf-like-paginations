@@ -7,62 +7,23 @@ This project is an attempt to mimic [LimitOffsetPagination](https://www.django-r
 
     dotnet add package DrfLikePaginations
 
-It supports **queries in your data** given what is informed through the URL as query strings. You can get some details about how it works if you look at the tests in [PaginationITests.Queries](https://github.com/willianantunes/drf-like-paginations/blob/abdce3ab9293af95d923cf0b25634f555fad4aaa/tests/DrfLikePaginations/PaginationITests.cs#L218) class.
+It supports **queries in your data** given what is informed through the URL as query strings. You can get some details about how it works if you look at the tests in [LimitOffsetPaginationITests.Queries](https://github.com/willianantunes/drf-like-paginations/blob/6c4dc9ae2f00643514f3898d54ce085443788df3/tests/DrfLikePaginations/LimitOffsetPaginationITests.cs#L218) class.
 
-It also support **model transformation**. If you don't want to expose your model, you can create a DTO and then provide a function which transforms your data. Check out one example on [this integration test](https://github.com/willianantunes/drf-like-paginations/blob/67c5a14babcbfbd75ded8d603a9575a1bb15511a/tests/DrfLikePaginations/PaginationITests.cs#L354-L372).
+It also support **model transformation**. If you don't want to expose your model, you can create a DTO and then provide a function which transforms your data. Check out one example on [this integration test](https://github.com/willianantunes/drf-like-paginations/blob/6c4dc9ae2f00643514f3898d54ce085443788df3/tests/DrfLikePaginations/LimitOffsetPaginationITests.cs#L353-L371).
 
 The following project is using it and you can use as an example to set up yours:
 
 - [Tic Tac Toe C# Playground](https://github.com/willianantunes/tic-tac-toe-csharp-playground)
 
-## Sample output
+## See it in action!
 
-You can check out one sample output below from the project [ef-core-how-to-handle-migrations-in-production](https://github.com/willianantunes/tutorials/tree/d19609a50605a8d519ade3a568995da66568b212/2021/XX/ef-core-how-to-handle-migrations-in-production):
+Sample GIF that shows `CursorPagination`:
 
-```json
-{
-  "count": 100,
-  "next": "http://0.0.0.0:8000/api/v1/todoitems?limit=5&offset=5",
-  "previous": null,
-  "results": [
-    {
-      "name": "TD 1",
-      "isComplete": false,
-      "id": 1,
-      "createdAt": "2021-06-08T19:00:17.873423",
-      "updatedAt": "2021-06-08T19:00:17.87347"
-    },
-    {
-      "name": "TD 73",
-      "isComplete": false,
-      "id": 2,
-      "createdAt": "2021-06-08T19:00:17.873571",
-      "updatedAt": "2021-06-08T19:00:17.873571"
-    },
-    {
-      "name": "TD 72",
-      "isComplete": true,
-      "id": 3,
-      "createdAt": "2021-06-08T19:00:17.87357",
-      "updatedAt": "2021-06-08T19:00:17.87357"
-    },
-    {
-      "name": "TD 71",
-      "isComplete": false,
-      "id": 4,
-      "createdAt": "2021-06-08T19:00:17.87357",
-      "updatedAt": "2021-06-08T19:00:17.87357"
-    },
-    {
-      "name": "TD 70",
-      "isComplete": true,
-      "id": 5,
-      "createdAt": "2021-06-08T19:00:17.873569",
-      "updatedAt": "2021-06-08T19:00:17.873569"
-    }
-  ]
-}
-```
+![Sample usage of how CursorPagination works](docs/drflp-cursor-sample.gif)
+
+Sample GIF that shows `LimitOffsetPagination`:
+
+![Sample usage of how LimitOffsetPagination works](docs/drflp-offset-sample.gif)
 
 ## How to use it
 
