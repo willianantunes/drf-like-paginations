@@ -36,7 +36,7 @@ namespace DrfLikePaginations
             else
             {
                 var message = $"The field {defaultFieldForOrdering} does not match the pattern: {pattern}";
-                throw new ProvidedFieldForOrderingIsWrongException(message);    
+                throw new ProvidedFieldForOrderingIsWrongException(message);
             }
         }
 
@@ -223,13 +223,13 @@ namespace DrfLikePaginations
             {
                 if (cursor.Reverse)
                     return source.AsQueryable().OrderBy(orderPredicate);
-                
+
                 return source.AsQueryable().OrderByDescending(orderPredicate);
             }
-            
+
             if (cursor.Reverse)
                 return source.AsQueryable().OrderByDescending(orderPredicate);
-                
+
             return source.AsQueryable().OrderBy(orderPredicate);
         }
 

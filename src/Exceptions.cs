@@ -30,7 +30,7 @@ namespace DrfLikePaginations
         {
         }
     }
-    
+
     public class ProvidedFieldForOrderingIsWrongException : DrfLikePaginationsExceptions
     {
         public ProvidedFieldForOrderingIsWrongException(string message) : base(message)

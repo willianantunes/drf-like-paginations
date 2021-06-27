@@ -47,7 +47,7 @@ namespace Tests.DrfLikePaginations
                 paginated.Results.Should().HaveCount(_defaultPageLimit);
                 paginated.Previous.Should().BeNull();
                 var allRetrievedIds = paginated.Results.Select(v => v.Id).ToList();
-                var expectedRetrievedIds = new List<int> {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+                var expectedRetrievedIds = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
                 allRetrievedIds.Should().Equal(expectedRetrievedIds);
                 var paginatedNext = paginated.Next;
                 paginatedNext.Should().StartWith("https://www.willianantunes.com/?");
@@ -56,7 +56,7 @@ namespace Tests.DrfLikePaginations
                 int.Parse(paginationSetup.Position!).Should().Be(10);
                 int.Parse(paginationSetup.Limit!).Should().Be(_defaultPageLimit);
             }
-            
+
             [Fact(DisplayName = "When no options are provided DESC ORDERING")]
             public async Task ShouldCreatePaginatedScenarioOptions2()
             {
@@ -71,7 +71,7 @@ namespace Tests.DrfLikePaginations
                 paginated.Results.Should().HaveCount(_defaultPageLimit);
                 paginated.Previous.Should().BeNull();
                 var allRetrievedIds = paginated.Results.Select(v => v.Id).ToList();
-                var expectedRetrievedIds = new List<int> {50, 49, 48, 47, 46, 45, 44, 43, 42, 41};
+                var expectedRetrievedIds = new List<int> { 50, 49, 48, 47, 46, 45, 44, 43, 42, 41 };
                 allRetrievedIds.Should().Equal(expectedRetrievedIds);
                 var paginatedNext = paginated.Next;
                 paginatedNext.Should().StartWith("https://www.willianantunes.com/?");
@@ -80,7 +80,7 @@ namespace Tests.DrfLikePaginations
                 int.Parse(paginationSetup.Position!).Should().Be(41);
                 int.Parse(paginationSetup.Limit!).Should().Be(_defaultPageLimit);
             }
-            
+
             [Fact(DisplayName = "Should throw exception when field does not match pattern")]
             public void ShouldCreatePaginatedScenarioOptions3()
             {
@@ -88,12 +88,12 @@ namespace Tests.DrfLikePaginations
                 var invalidField = "-1Id";
                 var pattern = @"^-?([a-zA-Z]+)$";
                 // Act
-                Action act = () => new CursorPagination(_defaultPageLimit, _defaultMaxPageLimit, invalidField);;
+                Action act = () => new CursorPagination(_defaultPageLimit, _defaultMaxPageLimit, invalidField); ;
                 // Assert
                 var expectedMessage = $"The field {invalidField} does not match the pattern: {pattern}";
                 act.Should().Throw<ProvidedFieldForOrderingIsWrongException>()
                     .WithMessage(expectedMessage);
-            }            
+            }
         }
 
         public class Navigations
@@ -172,7 +172,7 @@ namespace Tests.DrfLikePaginations
                 foreach (var (result, index) in listOfResults.Select((item, index) => (item, index)))
                     result.Should().Equal(expectedListOfResults[index]);
             }
-            
+
             [Fact(DisplayName = "When the navigation goes from the beginning to end DESC ORDERING")]
             public async Task ShouldCreatePaginatedScenarioNavigation2()
             {
@@ -232,7 +232,7 @@ namespace Tests.DrfLikePaginations
                 listOfResults.Should().HaveCount(5);
                 foreach (var (result, index) in listOfResults.Select((item, index) => (item, index)))
                     result.Should().Equal(expectedListOfResults[index]);
-            }            
+            }
 
             [Fact(DisplayName = "When the navigation goes from the end to beginning ASC ORDERING")]
             public async Task ShouldCreatePaginatedScenarioNavigation3()
@@ -294,7 +294,7 @@ namespace Tests.DrfLikePaginations
                 foreach (var (result, index) in listOfResults.Select((item, index) => (item, index)))
                     result.Should().Equal(expectedListOfResults[index]);
             }
-            
+
             [Fact(DisplayName = "When the navigation goes from the end to beginning DESC ORDERING")]
             public async Task ShouldCreatePaginatedScenarioNavigation4()
             {
