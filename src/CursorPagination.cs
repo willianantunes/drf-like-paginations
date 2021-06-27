@@ -144,16 +144,23 @@ namespace DrfLikePaginations
         {
             var valueAsBase64 = values.FirstOrDefault();
 
-            if (valueAsBase64 is not null)
+            try
             {
-                var valueAsString = Base64.Decode(valueAsBase64);
-                var queryStringCollection = HttpUtility.ParseQueryString(valueAsString);
-                Trace.Assert(queryStringCollection.Keys.Count == 2);
+                if (valueAsBase64 is not null)
+                {
+                    var valueAsString = Base64.Decode(valueAsBase64);
+                    var queryStringCollection = HttpUtility.ParseQueryString(valueAsString);
+                    Trace.Assert(queryStringCollection.Keys.Count == 2);
 
-                var reverse = bool.Parse(queryStringCollection["r"]!);
-                var position = queryStringCollection["p"];
+                    var reverse = bool.Parse(queryStringCollection["r"]!);
+                    var position = queryStringCollection["p"];
 
-                return new CursorDetails(reverse, position);
+                    return new CursorDetails(reverse, position);
+                }
+            }
+            catch (FormatException)
+            {
+                // When the input is not a valid Base-64 string
             }
 
             return new CursorDetails(false, null);

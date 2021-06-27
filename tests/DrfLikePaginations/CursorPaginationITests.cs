@@ -94,6 +94,31 @@ namespace Tests.DrfLikePaginations
                 act.Should().Throw<ProvidedFieldForOrderingIsWrongException>()
                     .WithMessage(expectedMessage);
             }
+
+            [Fact(DisplayName = "Should ignore invalid cursor")]
+            public async Task ShouldCreatePaginatedScenarioOptions4()
+            {
+                // Arrange
+                _pagination = new CursorPagination(_defaultPageLimit, _defaultMaxPageLimit);
+                var query = await CreateScenarioWith50Situations(_dbContext);
+                var queryString = "cursor=INVALID";
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(queryString);
+                // Act
+                var paginated = await _pagination.CreateAsync(query, _url, queryParams);
+                // Assert
+                paginated.Count.Should().BeNull();
+                paginated.Results.Should().HaveCount(_defaultPageLimit);
+                paginated.Previous.Should().BeNull();
+                var allRetrievedIds = paginated.Results.Select(v => v.Id).ToList();
+                var expectedRetrievedIds = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+                allRetrievedIds.Should().Equal(expectedRetrievedIds);
+                var paginatedNext = paginated.Next;
+                paginatedNext.Should().StartWith("https://www.willianantunes.com/?");
+                var paginationSetup = BuildPaginationSetup(paginated.Next)!;
+                paginationSetup.Reverse.Should().BeFalse();
+                int.Parse(paginationSetup.Position!).Should().Be(10);
+                int.Parse(paginationSetup.Limit!).Should().Be(_defaultPageLimit);
+            }
         }
 
         public class Navigations
