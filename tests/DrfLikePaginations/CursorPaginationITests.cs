@@ -380,6 +380,40 @@ namespace Tests.DrfLikePaginations
                 foreach (var (result, index) in listOfResults.Select((item, index) => (item, index)))
                     result.Should().Equal(expectedListOfResults[index]);
             }
+
+            [Fact(DisplayName = "Should everything being empty when ASC ORDERING")]
+            public async Task ShouldCreatePaginatedScenarioNavigation5()
+            {
+                // Arrange
+                _pagination = new CursorPagination(_defaultPageLimit, _defaultMaxPageLimit);
+                var query = await CreateScenarioWith50Situations(_dbContext);
+                var cursorQueryString = CreateCursorQueryString(false, "1000");
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(cursorQueryString);
+                // Act
+                var paginated = await _pagination.CreateAsync(query, _url, queryParams);
+                // Assert
+                paginated.Count.Should().BeNull();
+                paginated.Results.Should().HaveCount(0);
+                paginated.Previous.Should().BeNull();
+                paginated.Next.Should().BeNull();
+            }
+
+            [Fact(DisplayName = "Should everything being empty when DESC ORDERING")]
+            public async Task ShouldCreatePaginatedScenarioNavigation6()
+            {
+                // Arrange
+                _pagination = new CursorPagination(_defaultPageLimit, _defaultMaxPageLimit);
+                var query = await CreateScenarioWith50Situations(_dbContext);
+                var cursorQueryString = CreateCursorQueryString(true, "1");
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(cursorQueryString);
+                // Act
+                var paginated = await _pagination.CreateAsync(query, _url, queryParams);
+                // Assert
+                paginated.Count.Should().BeNull();
+                paginated.Results.Should().HaveCount(0);
+                paginated.Previous.Should().BeNull();
+                paginated.Next.Should().BeNull();
+            }
         }
 
         private static string CreateCursorQueryString(bool reverse, string position)

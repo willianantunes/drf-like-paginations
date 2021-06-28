@@ -119,8 +119,7 @@ namespace Tests.DrfLikePaginations
                 _url = "https://www.willianantunes.com";
             }
 
-            [Fact(DisplayName =
-                "When the navigation goes from the beginning to end with no provided options at the start")]
+            [Fact(DisplayName = "When the navigation goes from the beginning to end")]
             public async Task ShouldCreatePaginatedScenarioNavigation1()
             {
                 // First arrangement
@@ -167,8 +166,64 @@ namespace Tests.DrfLikePaginations
                 listOfNext.Should().Equal(expectedListOfNext);
             }
 
-            [Fact(DisplayName = "When the navigation goes from the end to beginning")]
+            [Fact(DisplayName = "When the navigation goes from the beginning to end WITH QUERY")]
             public async Task ShouldCreatePaginatedScenarioNavigation2()
+            {
+                // First arrangement
+                var query = await CreateScenarioWith50People(_dbContext);
+                var robotPersonFilter = true;
+                var filterQueryString = $"robot={robotPersonFilter}";
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(filterQueryString);
+                var shouldGetNextPagination = true;
+                var listOfResults = new List<List<int>>();
+                var listOfPrevious = new List<string?>();
+                var listOfNext = new List<string?>();
+                // Act
+                while (shouldGetNextPagination)
+                {
+                    var paginated = await _pagination.CreateAsync(query, _url, queryParams);
+                    paginated.Count.Should().Be(25);
+                    var allRetrievedIds = paginated.Results.Select(v => v.Id).ToList();
+                    listOfResults.Add(allRetrievedIds);
+                    listOfPrevious.Add(paginated.Previous);
+                    listOfNext.Add(paginated.Next);
+                    if (paginated.Next is null)
+                        shouldGetNextPagination = false;
+                    else
+                    {
+                        var queryStrings = paginated.Next.Split("?")[1];
+                        queryParams = Http.RetrieveQueryCollectionFromQueryString(queryStrings);
+                    }
+                }
+
+                // Assert
+                var expectedListOfPrevious = new List<string?>
+                {
+                    null,
+                    $"{_url}/?robot=True&limit={_defaultPageLimit}",
+                    $"{_url}/?robot=True&limit={_defaultPageLimit}&offset={_defaultPageLimit}",
+                };
+                var expectedListOfNext = new List<string?>
+                {
+                    $"{_url}/?robot=True&limit={_defaultPageLimit}&offset={_defaultPageLimit}",
+                    $"{_url}/?robot=True&limit={_defaultPageLimit}&offset={_defaultPageLimit + _defaultPageLimit}",
+                    null
+                };
+                listOfPrevious.Should().Equal(expectedListOfPrevious);
+                listOfNext.Should().Equal(expectedListOfNext);
+                listOfResults.Should().HaveCount(3);
+                var expectedListOfResults = new List<List<int>>
+                {
+                    new() {2, 4, 6, 8, 10, 12, 14, 16, 18, 20},
+                    new() {22, 24, 26, 28, 30, 32, 34, 36, 38, 40},
+                    new() {42, 44, 46, 48, 50},
+                };
+                foreach (var (result, index) in listOfResults.Select((item, index) => (item, index)))
+                    result.Should().Equal(expectedListOfResults[index]);
+            }
+
+            [Fact(DisplayName = "When the navigation goes from the end to beginning")]
+            public async Task ShouldCreatePaginatedScenarioNavigation3()
             {
                 // First arrangement
                 var query = await CreateScenarioWith50People(_dbContext);
@@ -213,6 +268,61 @@ namespace Tests.DrfLikePaginations
                 listOfPrevious.Should().Equal(expectedListOfPrevious);
                 listOfNext.Should().Equal(expectedListOfNext);
             }
+
+            [Fact(DisplayName = "When the navigation goes from the end to beginning WITH QUERY")]
+            public async Task ShouldCreatePaginatedScenarioNavigation4()
+            {
+                // First arrangement
+                var query = await CreateScenarioWith50People(_dbContext);
+                var robotPersonFilter = true;
+                var queryString = $"robot={robotPersonFilter}&offset=20";
+                var queryParams = Http.RetrieveQueryCollectionFromQueryString(queryString);
+                var shouldGetPreviousPagination = true;
+                var listOfResults = new List<List<int>>();
+                var listOfPrevious = new List<string?>();
+                var listOfNext = new List<string?>();
+                // Act
+                while (shouldGetPreviousPagination)
+                {
+                    var paginated = await _pagination.CreateAsync(query, _url, queryParams);
+                    paginated.Count.Should().Be(25);
+                    var allRetrievedIds = paginated.Results.Select(v => v.Id).ToList();
+                    listOfResults.Add(allRetrievedIds);
+                    listOfPrevious.Add(paginated.Previous);
+                    listOfNext.Add(paginated.Next);
+                    if (paginated.Previous is null)
+                        shouldGetPreviousPagination = false;
+                    else
+                    {
+                        var queryStrings = paginated.Previous.Split("?")[1];
+                        queryParams = Http.RetrieveQueryCollectionFromQueryString(queryStrings);
+                    }
+                }
+                // Assert
+                var expectedListOfPrevious = new List<string?>
+                {
+                    $"{_url}/?robot=True&limit={_defaultPageLimit}&offset={_defaultPageLimit}",
+                    $"{_url}/?robot=True&limit={_defaultPageLimit}",
+                    null,
+                };
+                var expectedListOfNext = new List<string?>
+                {
+                    null,
+                    $"{_url}/?robot=True&limit={_defaultPageLimit}&offset={_defaultPageLimit + _defaultPageLimit}",
+                    $"{_url}/?robot=True&limit={_defaultPageLimit}&offset={_defaultPageLimit}",
+                };
+                listOfPrevious.Should().Equal(expectedListOfPrevious);
+                listOfNext.Should().Equal(expectedListOfNext);
+                listOfResults.Should().HaveCount(3);
+                var expectedListOfResults = new List<List<int>>
+                {
+                    new() {42, 44, 46, 48, 50},
+                    new() {22, 24, 26, 28, 30, 32, 34, 36, 38, 40},
+                    new() {2, 4, 6, 8, 10, 12, 14, 16, 18, 20},
+                };
+                foreach (var (result, index) in listOfResults.Select((item, index) => (item, index)))
+                    result.Should().Equal(expectedListOfResults[index]);
+            }
         }
 
         public class Queries
@@ -244,7 +354,7 @@ namespace Tests.DrfLikePaginations
                 // Act
                 var paginated = await _pagination.CreateAsync(query, _url, queryParams);
                 // Assert
-                paginated.Count.Should().Be(50);
+                paginated.Count.Should().Be(expectedResult);
                 paginated.Results.Should().HaveCount(expectedResult);
             }
 
@@ -259,7 +369,7 @@ namespace Tests.DrfLikePaginations
                 // Act
                 var paginated = await _pagination.CreateAsync(query, _url, queryParams);
                 // Assert
-                paginated.Count.Should().Be(50);
+                paginated.Count.Should().Be(1);
                 paginated.Results.Should().HaveCount(1);
                 var person = paginated.Results.First();
                 person.Id.Should().Be(idToFilter);
@@ -278,7 +388,7 @@ namespace Tests.DrfLikePaginations
                 // Act
                 var paginated = await _pagination.CreateAsync(query, _url, queryParams);
                 // Assert
-                paginated.Count.Should().Be(50);
+                paginated.Count.Should().Be(expectedResult);
                 paginated.Results.Should().HaveCount(expectedResult);
             }
 
@@ -296,7 +406,7 @@ namespace Tests.DrfLikePaginations
                 // Act
                 var paginated = await _pagination.CreateAsync(query, _url, queryParams);
                 // Assert
-                paginated.Count.Should().Be(50);
+                paginated.Count.Should().Be(expectedResult);
                 paginated.Results.Should().HaveCount(expectedResult);
             }
 
@@ -315,7 +425,7 @@ namespace Tests.DrfLikePaginations
                 // Act
                 var paginated = await _pagination.CreateAsync(query, _url, queryParams);
                 // Assert
-                paginated.Count.Should().Be(50);
+                paginated.Count.Should().Be(expectedResult);
                 paginated.Results.Should().HaveCount(expectedResult);
             }
 

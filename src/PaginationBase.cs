@@ -21,8 +21,11 @@ namespace DrfLikePaginations
             _maxPageSize = maxPageSize;
         }
 
-        public abstract Task<Paginated<T>> CreateAsync<T>(IQueryable<T> source, string url, IQueryCollection queryParams);
-        public abstract Task<Paginated<TResult>> CreateAsync<T, TResult>(IQueryable<T> source, string url, IQueryCollection queryParams, Func<T, TResult> transform);
+        public abstract Task<Paginated<T>> CreateAsync<T>(IQueryable<T> source, string url,
+            IQueryCollection queryParams);
+
+        public abstract Task<Paginated<TResult>> CreateAsync<T, TResult>(IQueryable<T> source, string url,
+            IQueryCollection queryParams, Func<T, TResult> transform);
 
         protected int RetrieveConfiguredLimit(StringValues values)
         {
@@ -43,8 +46,10 @@ namespace DrfLikePaginations
             return _defaultLimit;
         }
 
-        protected IQueryable<T> ApplyCustomFilterIfApplicable<T>(IQueryable<T> source, IEnumerable<KeyValuePair<string, StringValues>> queryParams)
+        protected Tuple<List<KeyValuePair<string, StringValues>>, IQueryable<T>> ApplyCustomFilterIfApplicable<T>(
+            IQueryable<T> source, IEnumerable<KeyValuePair<string, StringValues>> queryParams)
         {
+            var validQueryParams = new List<KeyValuePair<string, StringValues>>();
             var propertiesToBeUsed = new Dictionary<PropertyInfo, string>();
             var typeOfTheGivenGeneric = typeof(T);
             var flags = BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance;
@@ -56,7 +61,10 @@ namespace DrfLikePaginations
                 var propertyValue = queryParam.Value.ToString();
                 var property = typeOfTheGivenGeneric.GetProperty(propertyName, flags);
                 if (property is not null && propertyValue is not null)
+                {
                     propertiesToBeUsed.Add(property, queryParam.Value.ToString());
+                    validQueryParams.Add(queryParam);
+                }
             }
 
             var shouldApplyFiltering = propertiesToBeUsed.Count > 0;
@@ -106,11 +114,12 @@ namespace DrfLikePaginations
                         }
                     }
 
-                    return source.Where(mergedPredicate);
+                    var filteredSource = source.Where(mergedPredicate);
+                    return Tuple.Create(validQueryParams, filteredSource);
                 }
             }
 
-            return source;
+            return Tuple.Create(validQueryParams, source);
         }
     }
 }

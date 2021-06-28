@@ -31,15 +31,16 @@ namespace DrfLikePaginations
             var offsetQueryParam = queryParams.FirstOrDefault(pair => pair.Key == _offsetQueryParam);
             var allOthersParams =
                 queryParams.Where(pair => pair.Key != _limitQueryParam || pair.Key != _offsetQueryParam);
-            // Setting basic data
+            // Basic data
             var numberOfRowsToSkip = RetrieveConfiguredOffset(offsetQueryParam.Value);
             var numberOfRowsToTake = RetrieveConfiguredLimit(limitQueryParam.Value);
-            var count = await source.CountAsync();
-            var nextLink = RetrieveNextLink(url, numberOfRowsToSkip, numberOfRowsToTake, count);
-            var previousLink = RetrievePreviousLink(url, numberOfRowsToSkip, numberOfRowsToTake);
             // Building list
-            IQueryable<T> filteredSource = ApplyCustomFilterIfApplicable(source, allOthersParams);
+            var (paramsForFiltering, filteredSource) = ApplyCustomFilterIfApplicable(source, allOthersParams);
+            var count = await filteredSource.CountAsync();
             var items = await filteredSource.Skip(numberOfRowsToSkip).Take(numberOfRowsToTake).ToListAsync();
+            // Links
+            var nextLink = RetrieveNextLink(url, numberOfRowsToSkip, numberOfRowsToTake, count, paramsForFiltering);
+            var previousLink = RetrievePreviousLink(url, numberOfRowsToSkip, numberOfRowsToTake, paramsForFiltering);
 
             return new Paginated<T>(count, nextLink, previousLink, items);
         }
@@ -54,13 +55,21 @@ namespace DrfLikePaginations
             return new Paginated<TResult>(paginated.Count, paginated.Next, paginated.Previous, refreshedResults);
         }
 
-        private string? RetrievePreviousLink(string url, int numberOfRowsToSkip, int numberOfRowsToTake)
+        private string? RetrievePreviousLink(string url, int numberOfRowsToSkip, int numberOfRowsToTake,
+            List<KeyValuePair<string, StringValues>> paramsForFiltering)
         {
             if (numberOfRowsToSkip == 0)
                 return null;
 
             var uriBuilder = new UriBuilder(url);
             var query = HttpUtility.ParseQueryString(uriBuilder.Query);
+            // When you add some filters, we must repass the valid ones
+            foreach (var paramForFiltering in paramsForFiltering)
+            {
+                var key = paramForFiltering.Key;
+                var value = paramForFiltering.Value[0];
+                query.Add(key, value);
+            }
             query[_limitQueryParam] = numberOfRowsToTake.ToString();
 
             var shouldNotProvideOffset = numberOfRowsToSkip - numberOfRowsToTake <= 0;
@@ -78,7 +87,8 @@ namespace DrfLikePaginations
             return uriBuilder.Uri.AbsoluteUri;
         }
 
-        private string? RetrieveNextLink(string url, int numberOfRowsToSkip, int numberOfRowsToTake, int count)
+        private string? RetrieveNextLink(string url, int numberOfRowsToSkip, int numberOfRowsToTake, int count,
+            List<KeyValuePair<string, StringValues>> paramsForFiltering)
         {
             var greaterThanTheAmountOfRowsAvailable = numberOfRowsToSkip + numberOfRowsToTake >= count;
             if (greaterThanTheAmountOfRowsAvailable) return null;
@@ -87,6 +97,13 @@ namespace DrfLikePaginations
 
             var uriBuilder = new UriBuilder(url);
             var query = HttpUtility.ParseQueryString(uriBuilder.Query);
+            // When you add some filters, we must repass the valid ones
+            foreach (var paramForFiltering in paramsForFiltering)
+            {
+                var key = paramForFiltering.Key;
+                var value = paramForFiltering.Value[0];
+                query.Add(key, value);
+            }
             query[_limitQueryParam] = numberOfRowsToTake.ToString();
             query[_offsetQueryParam] = newOffSetValue.ToString();
             uriBuilder.Query = query.ToString();

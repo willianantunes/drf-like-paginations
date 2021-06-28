@@ -51,7 +51,8 @@ namespace DrfLikePaginations
             var cursor = RetrieveConfiguredCursor(cursorQueryParam.Value);
             var numberOfRowsToTake = RetrieveConfiguredLimit(limitQueryParam.Value);
             // Building list
-            var customSource = ApplyCustomFilterIfApplicable(source, allOthersParams);
+            var (paramsForFiltering, customSource) = ApplyCustomFilterIfApplicable(source, allOthersParams);
+            // var customSource = ApplyCustomFilterIfApplicable(source, allOthersParams);
             var orderedSource = ApplyOrdering(customSource, cursor);
             var filteredSource = ApplyFilterIfRequired(orderedSource, cursor);
             var extraItemToIdentifyNextPage = 1;
@@ -68,8 +69,8 @@ namespace DrfLikePaginations
             // TODO: Add OFFSET to fix possible collisions
             var positions = RetrievePositions(cursor, actualNumberOfRowsToTake, items, itemsToBeReturned);
             // Building links
-            string? previousLink = RetrievePreviousLink(url, numberOfRowsToTake, positions.Previous);
-            string? nextLink = RetrieveNextLink(url, numberOfRowsToTake, positions.Next);
+            string? previousLink = RetrievePreviousLink(url, numberOfRowsToTake, positions.Previous, paramsForFiltering);
+            string? nextLink = RetrieveNextLink(url, numberOfRowsToTake, positions.Next, paramsForFiltering);
 
             return new Paginated<T>(null, nextLink, previousLink, itemsToBeReturned);
         }
@@ -84,7 +85,8 @@ namespace DrfLikePaginations
             return new Paginated<TResult>(paginated.Count, paginated.Next, paginated.Previous, refreshedResults);
         }
 
-        private string? RetrievePreviousLink(string url, int numberOfRowsToTake, string? cursorPosition)
+        private string? RetrievePreviousLink(string url, int numberOfRowsToTake, string? cursorPosition,
+            List<KeyValuePair<string, StringValues>> paramsForFiltering)
         {
             if (cursorPosition is null)
                 return null;
@@ -105,6 +107,13 @@ namespace DrfLikePaginations
             // Now the link itself
             var uriBuilder = new UriBuilder(url);
             var query = HttpUtility.ParseQueryString(uriBuilder.Query);
+            // When you add some filters, we must repass the valid ones
+            foreach (var paramForFiltering in paramsForFiltering)
+            {
+                var key = paramForFiltering.Key;
+                var value = paramForFiltering.Value[0];
+                query.Add(key, value);
+            }
             query[_cursorQueryParam] = encodedCursorQueryString;
             query[_limitQueryParam] = numberOfRowsToTake.ToString();
             uriBuilder.Query = query.ToString();
@@ -112,7 +121,8 @@ namespace DrfLikePaginations
             return uriBuilder.Uri.AbsoluteUri;
         }
 
-        private string? RetrieveNextLink(string url, int numberOfRowsToTake, string? cursorPosition)
+        private string? RetrieveNextLink(string url, int numberOfRowsToTake, string? cursorPosition,
+            List<KeyValuePair<string, StringValues>> paramsForFiltering)
         {
             if (cursorPosition is null)
                 return null;
@@ -133,6 +143,13 @@ namespace DrfLikePaginations
             // Now the link itself
             var uriBuilder = new UriBuilder(url);
             var query = HttpUtility.ParseQueryString(uriBuilder.Query);
+            // When you add some filters, we must repass the valid ones
+            foreach (var paramForFiltering in paramsForFiltering)
+            {
+                var key = paramForFiltering.Key;
+                var value = paramForFiltering.Value[0];
+                query.Add(key, value);
+            }
             query[_cursorQueryParam] = encodedCursorQueryString;
             query[_limitQueryParam] = numberOfRowsToTake.ToString();
             uriBuilder.Query = query.ToString();
