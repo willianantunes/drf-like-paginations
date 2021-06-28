@@ -35,19 +35,6 @@ namespace DrfLikePaginations
             return property;
         }
 
-        public static string RetrieveValueAsString(object source, PropertyInfo property)
-        {
-            var value = property.GetValue(source, null);
-
-            if (value is null)
-            {
-                var message = $"There is no value in {property.Name}. Are you sure that it should have one?";
-                throw new PropertyValueMustBePresentException(message);
-            }
-
-            return value.ToString()!;
-        }
-
         public static string RetrieveValueAsString(object source, Type type, string propertyName)
         {
             var property = RetrievePropertyInfoFromSourceGivenItsName(type, propertyName);

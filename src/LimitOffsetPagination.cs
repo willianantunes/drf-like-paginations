@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
 using System.Threading.Tasks;
 using System.Web;
 using Microsoft.AspNetCore.Http;
@@ -13,18 +11,14 @@ namespace DrfLikePaginations
 {
     public class LimitOffsetPagination : PaginationBase
     {
-        private readonly int _defaultLimit;
-        private readonly int _maxPageSize;
-        private readonly string _limitQueryParam = "limit";
         private readonly string _offsetQueryParam = "offset";
 
         public LimitOffsetPagination(int defaultPageSize, int maxPageSize = 25) : base(defaultPageSize, maxPageSize)
         {
-            _defaultLimit = defaultPageSize;
-            _maxPageSize = maxPageSize;
         }
 
-        public override async Task<Paginated<T>> CreateAsync<T>(IQueryable<T> source, string url, IQueryCollection queryParams)
+        public override async Task<Paginated<T>> CreateAsync<T>(IQueryable<T> source, string url,
+            IQueryCollection queryParams)
         {
             // Extracting query strings
             var limitQueryParam = queryParams.FirstOrDefault(pair => pair.Key == _limitQueryParam);
@@ -70,6 +64,7 @@ namespace DrfLikePaginations
                 var value = paramForFiltering.Value[0];
                 query.Add(key, value);
             }
+
             query[_limitQueryParam] = numberOfRowsToTake.ToString();
 
             var shouldNotProvideOffset = numberOfRowsToSkip - numberOfRowsToTake <= 0;
@@ -104,6 +99,7 @@ namespace DrfLikePaginations
                 var value = paramForFiltering.Value[0];
                 query.Add(key, value);
             }
+
             query[_limitQueryParam] = numberOfRowsToTake.ToString();
             query[_offsetQueryParam] = newOffSetValue.ToString();
             uriBuilder.Query = query.ToString();
